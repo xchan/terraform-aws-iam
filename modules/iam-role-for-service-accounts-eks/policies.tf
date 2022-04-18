@@ -17,7 +17,7 @@ data "aws_iam_policy_document" "cert_manager" {
 
   statement {
     actions   = ["route53:GetChange"]
-    resources = ["arn:aws:route53:::change/*"]
+    resources = ["arn:${local.partition}:route53:::change/*"]
   }
 
   statement {
@@ -26,7 +26,7 @@ data "aws_iam_policy_document" "cert_manager" {
       "route53:ListResourceRecordSets"
     ]
 
-    resources = var.cert_manager_hosted_zone_arns
+    resources = replace(var.cert_manager_hosted_zone_arns, "arn:aws:", "arn:${local.partition}:")
   }
 
   statement {
@@ -263,7 +263,7 @@ data "aws_iam_policy_document" "ebs_csi" {
         "kms:RevokeGrant",
       ]
 
-      resources = var.ebs_csi_kms_cmk_ids
+      resources = replace(var.ebs_csi_kms_cmk_ids, "arn:aws:", "arn:${local.partition}:")
 
       condition {
         test     = "Bool"
@@ -284,7 +284,7 @@ data "aws_iam_policy_document" "ebs_csi" {
         "kms:DescribeKey",
       ]
 
-      resources = var.ebs_csi_kms_cmk_ids
+      resources = replace(var.ebs_csi_kms_cmk_ids, "arn:aws:", "arn:${local.partition}:")
     }
   }
 }
@@ -375,7 +375,7 @@ data "aws_iam_policy_document" "external_dns" {
 
   statement {
     actions   = ["route53:ChangeResourceRecordSets"]
-    resources = var.external_dns_hosted_zone_arns
+    resources = replace(var.external_dns_hosted_zone_arns, "arn:aws:", "arn:${local.partition}:")
   }
 
   statement {
@@ -416,7 +416,7 @@ data "aws_iam_policy_document" "external_secrets" {
 
   statement {
     actions   = ["ssm:GetParameter"]
-    resources = var.external_secrets_ssm_parameter_arns
+    resources = replace(var.external_secrets_ssm_parameter_arns, "arn:aws:", "arn:${local.partition}:")
   }
 
   statement {
@@ -426,7 +426,7 @@ data "aws_iam_policy_document" "external_secrets" {
       "secretsmanager:DescribeSecret",
       "secretsmanager:ListSecretVersionIds",
     ]
-    resources = var.external_secrets_secrets_manager_arns
+    resources = replace(var.external_secrets_secrets_manager_arns, "arn:aws:", "arn:${local.partition}:")
   }
 }
 
@@ -462,7 +462,8 @@ data "aws_iam_policy_document" "fsx_lustre_csi" {
       "iam:AttachRolePolicy",
       "iam:PutRolePolicy"
     ]
-    resources = var.fsx_lustre_csi_service_role_arns
+
+    resources = replace(var.fsx_lustre_csi_service_role_arns, "arn:aws:", "arn:${local.partition}:")
   }
 
   statement {
@@ -548,9 +549,9 @@ data "aws_iam_policy_document" "karpenter_controller" {
   statement {
     actions = ["ec2:RunInstances"]
     resources = [
-      "arn:aws:ec2:*:${local.account_id}:launch-template/*",
-      "arn:aws:ec2:*:${local.account_id}:security-group/*",
-      "arn:aws:ec2:*:${local.account_id}:subnet/*",
+      "arn:${local.partition}:ec2:*:${local.account_id}:launch-template/*",
+      "arn:${local.partition}:ec2:*:${local.account_id}:security-group/*",
+      "arn:${local.partition}:ec2:*:${local.account_id}:subnet/*",
     ]
 
     condition {
@@ -563,21 +564,21 @@ data "aws_iam_policy_document" "karpenter_controller" {
   statement {
     actions = ["ec2:RunInstances"]
     resources = [
-      "arn:aws:ec2:*::image/*",
-      "arn:aws:ec2:*:${local.account_id}:instance/*",
-      "arn:aws:ec2:*:${local.account_id}:volume/*",
-      "arn:aws:ec2:*:${local.account_id}:network-interface/*",
+      "arn:${local.partition}:ec2:*::image/*",
+      "arn:${local.partition}:ec2:*:${local.account_id}:instance/*",
+      "arn:${local.partition}:ec2:*:${local.account_id}:volume/*",
+      "arn:${local.partition}:ec2:*:${local.account_id}:network-interface/*",
     ]
   }
 
   statement {
     actions   = ["ssm:GetParameter"]
-    resources = var.karpenter_controller_ssm_parameter_arns
+    resources = replace(var.karpenter_controller_ssm_parameter_arns, "arn:aws:", "arn:${local.partition}:")
   }
 
   statement {
     actions   = ["iam:PassRole"]
-    resources = var.karpenter_controller_node_iam_role_arns
+    resources = replace(var.karpenter_controller_node_iam_role_arns, "arn:aws:", "arn:${local.partition}:")
   }
 }
 
@@ -911,7 +912,7 @@ data "aws_iam_policy_document" "amazon_managed_service_prometheus" {
       "aps:GetMetricMetadata",
     ]
 
-    resources = var.amazon_managed_service_prometheus_workspace_arns
+    resources = replace(var.amazon_managed_service_prometheus_workspace_arns, "arn:aws:", "arn:${local.partition}:")
   }
 }
 
@@ -958,7 +959,7 @@ data "aws_iam_policy_document" "node_termination_handler" {
       "sqs:ReceiveMessage",
     ]
 
-    resources = var.node_termination_handler_sqs_queue_arns
+    resources = replace(var.node_termination_handler_sqs_queue_arns, "arn:aws:", "arn:${local.partition}:")
   }
 }
 
@@ -987,7 +988,7 @@ resource "aws_iam_role_policy_attachment" "node_termination_handler" {
 data "aws_iam_policy_document" "vpc_cni" {
   count = var.create_role && var.attach_vpc_cni_policy ? 1 : 0
 
-  # arn:aws:iam::aws:policy/AmazonEKS_CNI_Policy
+  # arn:${local.partition}:iam::aws:policy/AmazonEKS_CNI_Policy
   dynamic "statement" {
     for_each = var.vpc_cni_enable_ipv4 ? [1] : []
     content {
